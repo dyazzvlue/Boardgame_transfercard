@@ -141,9 +141,9 @@ def _score_straight(cards, cfg):
 
 def _score_single(card, cfg):
     if card.rank == CardRank.JOKER_RED:
-        return cfg["joker_red"]
+        return cfg.get("joker_red_single", cfg["joker_red"])
     if card.rank == CardRank.JOKER_BLACK:
-        return cfg["joker_black"]
+        return cfg.get("joker_black_single", cfg["joker_black"])
     return 0
 
 

@@ -71,39 +71,105 @@ def effect_ace(ctx):
     game.log("  A效果: {} 摸了 {} 张牌".format(target.name, len(drawn2)))
 
 
+# ── J 旧效果备份 ──
+# def effect_jack_old(ctx):
+#     """J(旧) — 指定一名玩家，让他的手牌数变为 jack_hand_target 张."""
+#     cfg = load_config()
+#     target_size = cfg["effects"]["jack_hand_target"]
+#     game = ctx.game
+#     players = game.get_players()
+#     target_idx = game.ask_choose_player(
+#         ctx.source_player_idx,
+#         "J效果：选择一位玩家，使其手牌数变为{}".format(target_size),
+#     )
+#     target = players[target_idx]
+#     current = target.hand_size()
+#     if current > target_size:
+#         excess = current - target_size
+#         to_discard = random.sample(target.hand, excess)
+#         game.discard_from_hand(target, to_discard)
+#     elif current < target_size:
+#         need = target_size - current
+#         game.draw_cards(target, need)
+
+
 @register_effect(CardRank.JACK)
 def effect_jack(ctx):
-    """J — 指定一名玩家，让他的手牌数变为 jack_hand_target 张."""
+    """J — 选择2名玩家，从他们手里各获得1张牌，
+    然后可以保留其中0-1张，其余放到牌库底部."""
     cfg = load_config()
-    target_size = cfg["effects"]["jack_hand_target"]
+    jack_steal = cfg["effects"].get("jack_steal_count", 1)
+    jack_keep = cfg["effects"].get("jack_keep_max", 1)
     game = ctx.game
     players = game.get_players()
+    source = players[ctx.source_player_idx]
 
-    target_idx = game.ask_choose_player(
+    # 选择2名有手牌的玩家
+    others_with_cards = [p for p in players
+                         if p.idx != ctx.source_player_idx and p.hand_size() > 0]
+    if not others_with_cards:
+        game.log("  J效果: 没有可以抽牌的目标")
+        return
+
+    stolen_cards = []
+
+    # 第1个目标
+    idx1 = game.ask_choose_player(
         ctx.source_player_idx,
-        "J效果：选择一位玩家，使其手牌数变为{}".format(target_size),
+        "J效果：选择第1位玩家抽取{}张牌".format(jack_steal),
+        exclude=[ctx.source_player_idx],
     )
-    target = players[target_idx]
-    current = target.hand_size()
+    target1 = players[idx1]
+    if target1.hand_size() > 0:
+        take1 = random.sample(target1.hand, min(jack_steal, target1.hand_size()))
+        target1.remove_from_hand(take1)
+        stolen_cards.extend(take1)
+        game.log("  J效果: 从 {} 手里抽了{}张牌".format(target1.name, len(take1)))
 
-    if current > target_size:
-        excess = current - target_size
-        to_discard = random.sample(target.hand, excess)
-        game.discard_from_hand(target, to_discard)
-        game.log("  J效果: {} 弃掉了 {} 张牌 (剩余{})".format(
-            target.name, excess, target.hand_size()))
-    elif current < target_size:
-        need = target_size - current
-        drawn = game.draw_cards(target, need)
-        game.log("  J效果: {} 补了 {} 张牌 (共{})".format(
-            target.name, len(drawn), target.hand_size()))
+    # 第2个目标（需要有别的玩家有牌）
+    others2 = [p for p in players
+               if p.idx != ctx.source_player_idx and p.idx != idx1 and p.hand_size() > 0]
+    if others2:
+        idx2 = game.ask_choose_player(
+            ctx.source_player_idx,
+            "J效果：选择第2位玩家抽取{}张牌".format(jack_steal),
+            exclude=[ctx.source_player_idx, idx1],
+        )
+        target2 = players[idx2]
+        if target2.hand_size() > 0:
+            take2 = random.sample(target2.hand, min(jack_steal, target2.hand_size()))
+            target2.remove_from_hand(take2)
+            stolen_cards.extend(take2)
+            game.log("  J效果: 从 {} 手里抽了{}张牌".format(target2.name, len(take2)))
     else:
-        game.log("  J效果: {} 手牌已经是{}张，无变化".format(target.name, target_size))
+        game.log("  J效果: 没有第2位可选目标")
+
+    if not stolen_cards:
+        return
+
+    # 先全部加入手牌，再选择保留0~jack_keep张，其余放回牌库底
+    source.add_to_hand(stolen_cards)
+
+    if len(stolen_cards) <= jack_keep:
+        # 全部保留
+        game.log("  J效果: {} 保留了全部{}张牌".format(source.name, len(stolen_cards)))
+    else:
+        # 选择要放回的牌
+        return_count = len(stolen_cards) - jack_keep
+        to_return = game.ask_choose_cards(
+            ctx.source_player_idx, return_count,
+            "J效果：选择{}张牌放到牌库底部（保留{}张）".format(return_count, jack_keep),
+        )
+        source.remove_from_hand(to_return)
+        for card in to_return:
+            game.deck.push_bottom(card)
+        game.log("  J效果: {} 保留了{}张，放回{}张到牌库底".format(
+            source.name, jack_keep, len(to_return)))
 
 
 @register_effect(CardRank.QUEEN)
 def effect_queen(ctx):
-    """Q — 所有玩家选 queen_return 张牌洗回牌库。
+    """Q — 其余玩家选 queen_return 张牌洗回牌库。
     如果此操作使手牌为0，该玩家摸 queen_empty_draw 张牌."""
     cfg = load_config()
     n = cfg["effects"]["queen_return"]
@@ -112,6 +178,8 @@ def effect_queen(ctx):
     players = game.get_players()
 
     for p in players:
+        if p.idx == ctx.source_player_idx:
+            continue
         if p.hand_size() == 0:
             continue
         actual_n = min(n, p.hand_size())

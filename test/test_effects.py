@@ -72,27 +72,49 @@ class TestEffectAce:
 
 
 class TestEffectJack:
-    def test_reduce(self):
-        game, players, _ = _make_game(hand_size=8)
-        game.ask_choose_player = MagicMock(return_value=1)
+    def test_steal_two_keep_one(self):
+        """J: steal from 2 players, keep 1, return 1 to deck bottom."""
+        game, players, deck = _make_game(hand_size=5)
+        game.ask_choose_player = MagicMock(side_effect=[1, 2])
+        game.ask_choose_cards = MagicMock(
+            side_effect=lambda idx, n, prompt: players[idx].hand[:n]
+        )
+        game.deck = deck
+        p0_before = players[0].hand_size()
+        p1_before = players[1].hand_size()
+        p2_before = players[2].hand_size()
         effect_jack(EffectContext(game=game, source_player_idx=0))
-        assert players[1].hand_size() == 5
+        # source: +2 stolen, -1 returned = net +1
+        assert players[0].hand_size() == p0_before + 1
+        # targets each lose 1
+        assert players[1].hand_size() == p1_before - 1
+        assert players[2].hand_size() == p2_before - 1
 
-    def test_increase(self):
-        game, players, _ = _make_game(hand_size=2)
+    def test_steal_only_one_target(self):
+        """J: only 1 other player has cards -> steal from 1 only."""
+        game, players, deck = _make_game(n_players=3, hand_size=5)
+        players[2].hand.clear()  # P2 has no cards
         game.ask_choose_player = MagicMock(return_value=1)
+        game.deck = deck
+        p0_before = players[0].hand_size()
         effect_jack(EffectContext(game=game, source_player_idx=0))
-        assert players[1].hand_size() == 5
+        # only 1 card stolen, <=jack_keep_max -> keep all
+        assert players[0].hand_size() == p0_before + 1
+        assert players[1].hand_size() == 4
 
-    def test_no_change(self):
-        game, players, _ = _make_game(hand_size=5)
-        game.ask_choose_player = MagicMock(return_value=1)
+    def test_no_targets(self):
+        """J: no other player has cards -> no effect."""
+        game, players, deck = _make_game(n_players=2, hand_size=5)
+        players[1].hand.clear()
+        game.deck = deck
+        p0_before = players[0].hand_size()
         effect_jack(EffectContext(game=game, source_player_idx=0))
-        assert players[1].hand_size() == 5
+        assert players[0].hand_size() == p0_before
 
 
 class TestEffectQueen:
-    def test_all_return_one(self):
+    def test_others_return_one(self):
+        """Q: only OTHER players return cards, source excluded."""
         game, players, deck = _make_game(hand_size=5)
         game.ask_choose_cards = MagicMock(
             side_effect=lambda idx, n, prompt: players[idx].hand[:n]
@@ -100,18 +122,25 @@ class TestEffectQueen:
         ctx = EffectContext(game=game, source_player_idx=0)
         deck_before = deck.remaining
         effect_queen(ctx)
-        for p in players:
-            assert p.hand_size() == 4
-        assert deck.remaining == deck_before + 3
+        # source (P0) keeps 5 cards
+        assert players[0].hand_size() == 5
+        # others return 1 each
+        assert players[1].hand_size() == 4
+        assert players[2].hand_size() == 4
+        assert deck.remaining == deck_before + 2
 
     def test_hand_zero_draws(self):
+        """Q: if other player hand->0 after return, they draw queen_empty_draw."""
         game, players, deck = _make_game(hand_size=1)
         game.ask_choose_cards = MagicMock(
             side_effect=lambda idx, n, prompt: players[idx].hand[:n]
         )
         effect_queen(EffectContext(game=game, source_player_idx=0))
-        for p in players:
-            assert p.hand_size() == 2
+        # source keeps 1
+        assert players[0].hand_size() == 1
+        # others return 1 -> 0 -> draw 2
+        assert players[1].hand_size() == 2
+        assert players[2].hand_size() == 2
 
 
 class TestEffectKing:

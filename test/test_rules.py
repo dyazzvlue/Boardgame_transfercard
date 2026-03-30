@@ -125,7 +125,7 @@ class TestSingle:
 
 class TestScoring:
     def test_pair_score(self):
-        assert calculate_score(CombinationType.SAME, [C(5), C(5, Suit.HEARTS)]) == 1
+        assert calculate_score(CombinationType.SAME, [C(5), C(5, Suit.HEARTS)]) == 2
 
     def test_triple_score(self):
         assert calculate_score(CombinationType.SAME, [C(5), C(5, Suit.HEARTS), C(5, Suit.CLUBS)]) == 2
@@ -143,10 +143,10 @@ class TestScoring:
         assert calculate_score(CombinationType.FLUSH_STRAIGHT, [C(5, Suit.HEARTS)] * 5) == 10
 
     def test_joker_red_single(self):
-        assert calculate_score(CombinationType.SINGLE, [joker_r()]) == 5
+        assert calculate_score(CombinationType.SINGLE, [joker_r()]) == 3
 
     def test_joker_black_single(self):
-        assert calculate_score(CombinationType.SINGLE, [joker_b()]) == 3
+        assert calculate_score(CombinationType.SINGLE, [joker_b()]) == 2
 
     def test_effect_single_no_score(self):
         assert calculate_score(CombinationType.SINGLE, [C(1)]) == 0

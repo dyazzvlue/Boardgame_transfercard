@@ -2,7 +2,9 @@
     "game": {
         "deck_count": 2,
         "hand_size": 5,
-        "draw_count": 2,
+        "draw_count": 1,
+        "return_draw_count": 2,
+        "play_draw_count": 1,
         "stalemate_rounds": 5
     },
     "effects": {
@@ -12,11 +14,13 @@
         "queen_empty_draw": 2,
         "king_draw": 1,
         "joker_red_bonus_draw": 2,
-        "joker_red_bonus_threshold": 3
+        "joker_red_bonus_threshold": 3,
+        "jack_steal_count": 1,
+        "jack_keep_max": 1
     },
     "scores": {
         "same": {
-            "2": 1,
+            "2": 2,
             "3": 2,
             "4": 4,
             "5": 6,
@@ -28,6 +32,8 @@
         "straight_extra_per_card": 1,
         "flush_straight": 10,
         "joker_red": 5,
-        "joker_black": 3
+        "joker_black": 3,
+        "joker_red_single": 3,
+        "joker_black_single": 2
     }
 }

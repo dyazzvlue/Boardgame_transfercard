@@ -174,7 +174,8 @@ class Game:
         card = chosen[0]
         player.remove_from_hand([card])
         self.deck.push_bottom(card)
-        drawn = self.draw_cards(player, 1)
+        n = self._cfg["game"].get("return_draw_count", 2)
+        drawn = self.draw_cards(player, n)
         self.bridge.log("{} 放回1张牌到牌库底，摸了{}张牌".format(player.name, len(drawn)))
 
     def _do_play_cards(self, player):
@@ -210,6 +211,13 @@ class Game:
         if triggers:
             ctx = EffectContext(game=self, source_player_idx=player.idx)
             resolve_effects(triggers, ctx)
+
+        # draw after play
+        play_draw = self._cfg["game"].get("play_draw_count", 1)
+        if play_draw > 0 and not self.deck.is_empty:
+            bonus = self.draw_cards(player, play_draw)
+            if bonus:
+                self.bridge.log("{} 出牌后摸了{}张牌".format(player.name, len(bonus)))
 
     # ── game over check ────────────────────────────────────────
 
