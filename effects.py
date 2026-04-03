@@ -61,6 +61,7 @@ def effect_ace(ctx):
     target_idx = game.ask_choose_player(
         ctx.source_player_idx,
         "A效果：选择一位玩家，你和他各摸{}张牌".format(n),
+        exclude=[ctx.source_player_idx],
     )
     target = players[target_idx]
 

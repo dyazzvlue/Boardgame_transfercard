@@ -212,6 +212,10 @@ class Game:
             ctx = EffectContext(game=self, source_player_idx=player.idx)
             resolve_effects(triggers, ctx)
 
+        # 出牌后手牌为0则直接结算，不再补牌
+        if player.hand_size() == 0:
+            return
+
         # draw after play
         play_draw = self._cfg["game"].get("play_draw_count", 1)
         if play_draw > 0 and not self.deck.is_empty:
