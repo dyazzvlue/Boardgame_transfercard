@@ -194,9 +194,13 @@ class TransCardGame(AbstractGame):
     def get_state(self):
         if self._game is None:
             return {}
-        # broadcast_state 发给所有人，隐藏所有手牌(仅显示手牌数量)
-        # 玩家自己的手牌通过 ask_select_cards 请求中附带
         return serialize_state(self._game, viewer_idx=-1)
+
+    def get_state_for_player(self, player_idx: int) -> dict:
+        """每个玩家能看到自己的手牌。"""
+        if self._game is None:
+            return {}
+        return serialize_state(self._game, viewer_idx=player_idx)
 
     def on_player_disconnected(self, player_idx):
         if self._bridge_shim is not None:
