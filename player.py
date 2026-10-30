@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from card import Card
-from constants import CombinationType
+if __package__:
+    from .card import Card
+    from .constants import CombinationType
+else:
+    from card import Card
+    from constants import CombinationType
 
 
 class Player:

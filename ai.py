@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-import random
 from abc import ABC, abstractmethod
 from collections import Counter
 
-from constants import ActionType, CombinationType
-from rules import find_all_valid_combinations
+if __package__:
+    from .constants import ActionType, CombinationType
+    from .rules import find_all_valid_combinations
+else:
+    from constants import ActionType, CombinationType
+    from rules import find_all_valid_combinations
 
 
 class AIStrategy(ABC):
@@ -30,21 +33,21 @@ class AIStrategy(ABC):
 
 class RandomAI(AIStrategy):
     def choose_action(self, player, available, game):
-        return random.choice(available)
+        return game.random.choice(available)
 
     def choose_cards_to_play(self, player, game):
         combos = find_all_valid_combinations(player.hand)
         if not combos:
             return []
-        _, cards, _ = random.choice(combos)
+        _, cards, _ = game.random.choice(combos)
         return cards
 
     def choose_cards_to_return(self, player, n, game):
-        return random.sample(player.hand, min(n, len(player.hand)))
+        return game.random.sample(player.hand, min(n, len(player.hand)))
 
     def choose_target_player(self, source_idx, players, exclude, game):
         candidates = [p for p in players if p.idx not in exclude]
-        return random.choice(candidates).idx
+        return game.random.choice(candidates).idx
 
 
 class GreedyAI(AIStrategy):
@@ -59,7 +62,7 @@ class GreedyAI(AIStrategy):
             return ActionType.DRAW_PLAYER
         if ActionType.RETURN_AND_DRAW in available:
             return ActionType.RETURN_AND_DRAW
-        return random.choice(available)
+        return game.random.choice(available)
 
     def choose_cards_to_play(self, player, game):
         combos = find_all_valid_combinations(player.hand)
@@ -86,7 +89,7 @@ class DefensiveAI(AIStrategy):
             return ActionType.RETURN_AND_DRAW
         if ActionType.DRAW_PLAYER in available:
             return ActionType.DRAW_PLAYER
-        return random.choice(available)
+        return game.random.choice(available)
 
     def choose_cards_to_play(self, player, game):
         combos = find_all_valid_combinations(player.hand)

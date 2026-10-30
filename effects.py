@@ -6,14 +6,20 @@ To modify an effect, edit only its function — nothing else changes.
 
 from __future__ import annotations
 
-import random
 from typing import TYPE_CHECKING
 
-from constants import CardRank, load_config
+if __package__:
+    from .constants import CardRank, load_config
+else:
+    from constants import CardRank, load_config
 
 if TYPE_CHECKING:
-    from player import Player
-    from card import Card
+    if __package__:
+        from .player import Player
+        from .card import Card
+    else:
+        from player import Player
+        from card import Card
 
 
 # ── registry ───────────────────────────────────────────────────────
@@ -122,7 +128,7 @@ def effect_jack(ctx):
     )
     target1 = players[idx1]
     if target1.hand_size() > 0:
-        take1 = random.sample(target1.hand, min(jack_steal, target1.hand_size()))
+        take1 = game.random.sample(target1.hand, min(jack_steal, target1.hand_size()))
         target1.remove_from_hand(take1)
         stolen_cards.extend(take1)
         game.log("  J效果: 从 {} 手里抽了{}张牌".format(target1.name, len(take1)))
@@ -138,7 +144,7 @@ def effect_jack(ctx):
         )
         target2 = players[idx2]
         if target2.hand_size() > 0:
-            take2 = random.sample(target2.hand, min(jack_steal, target2.hand_size()))
+            take2 = game.random.sample(target2.hand, min(jack_steal, target2.hand_size()))
             target2.remove_from_hand(take2)
             stolen_cards.extend(take2)
             game.log("  J效果: 从 {} 手里抽了{}张牌".format(target2.name, len(take2)))
@@ -235,7 +241,7 @@ def effect_joker_black(ctx):
             combined.extend(extra)
             game.log("  黑Joker: 牌数为奇数，从牌库补1张")
 
-    random.shuffle(combined)
+    game.random.shuffle(combined)
     half = len(combined) // 2
 
     p1.hand.clear()

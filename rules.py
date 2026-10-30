@@ -7,11 +7,18 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from card import Card
-from constants import (
-    CardRank, CardType, CombinationType,
-    EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
-)
+if __package__:
+    from .card import Card
+    from .constants import (
+        CardRank, CardType, CombinationType,
+        EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
+    )
+else:
+    from card import Card
+    from constants import (
+        CardRank, CardType, CombinationType,
+        EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
+    )
 
 
 # ── combination classification ─────────────────────────────────────

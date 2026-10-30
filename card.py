@@ -6,10 +6,16 @@ import itertools
 import random
 from collections import deque
 
-from constants import (
-    CardRank, CardType, Suit, SUIT_ALL,
-    EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
-)
+if __package__:
+    from .constants import (
+        CardRank, CardType, Suit, SUIT_ALL,
+        EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
+    )
+else:
+    from constants import (
+        CardRank, CardType, Suit, SUIT_ALL,
+        EFFECT_RANKS, JOKER_RANKS, rank_type, load_config,
+    )
 
 _uid_counter = itertools.count(1)
 
@@ -88,14 +94,15 @@ class Card:
 class Deck:
     """Draw pile backed by a deque (top = left)."""
 
-    def __init__(self):
+    def __init__(self, rng=None):
         self._cards = deque()
+        self.random = rng if rng is not None else random.Random()
 
     @classmethod
-    def standard(cls, deck_count=None):
+    def standard(cls, deck_count=None, rng=None):
         cfg = load_config()
         n = deck_count if deck_count is not None else cfg["game"]["deck_count"]
-        d = cls()
+        d = cls(rng=rng)
         for _ in range(n):
             for suit in SUIT_ALL:
                 for rank_val in range(1, 14):
@@ -106,7 +113,7 @@ class Deck:
 
     def shuffle(self):
         lst = list(self._cards)
-        random.shuffle(lst)
+        self.random.shuffle(lst)
         self._cards = deque(lst)
 
     def draw(self, n=1):
@@ -123,7 +130,7 @@ class Deck:
     def shuffle_in(self, cards):
         for card in cards:
             if self._cards:
-                pos = random.randint(0, len(self._cards))
+                pos = self.random.randint(0, len(self._cards))
                 self._cards.insert(pos, card)
             else:
                 self._cards.append(card)

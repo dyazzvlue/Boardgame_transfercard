@@ -134,10 +134,7 @@ def run_one_game(n_players, ai_cls, config_override=None):
     game.bridge = bridge
     game.setup(names, human_flags)
 
-    try:
-        game.run()
-    except Exception:
-        pass
+    game.run()
 
     return game, bridge
 

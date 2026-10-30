@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import random
 
-from card import Card, Deck, DiscardPile
-from constants import (
-    ActionType, CardRank, CombinationType, load_config,
-)
-from effects import EffectContext, resolve_effects
-from player import Player
-from rules import (
-    classify_combination, calculate_score, get_effect_triggers,
-)
+if __package__:
+    from .card import Card, Deck, DiscardPile
+    from .constants import ActionType, CardRank, CombinationType, load_config
+    from .effects import EffectContext, resolve_effects
+    from .player import Player
+    from .rules import classify_combination, calculate_score, get_effect_triggers
+else:
+    from card import Card, Deck, DiscardPile
+    from constants import ActionType, CardRank, CombinationType, load_config
+    from effects import EffectContext, resolve_effects
+    from player import Player
+    from rules import classify_combination, calculate_score, get_effect_triggers
 
 
 class Game:
@@ -26,10 +29,11 @@ class Game:
         show_state(game)
     """
 
-    def __init__(self, bridge):
+    def __init__(self, bridge, rng=None):
         self.bridge = bridge
+        self.random = rng if rng is not None else random.Random()
         self.players = []
-        self.deck = Deck()
+        self.deck = Deck(rng=self.random)
         self.discard = DiscardPile()
         self.turn = 0
         self.current_idx = 0
@@ -49,7 +53,7 @@ class Game:
             for i, (name, hf) in enumerate(zip(player_names, human_flags))
         ]
 
-        self.deck = Deck.standard(self._cfg["game"]["deck_count"])
+        self.deck = Deck.standard(self._cfg["game"]["deck_count"], rng=self.random)
         self.deck.shuffle()
 
         hand_size = self._cfg["game"]["hand_size"]
@@ -158,7 +162,7 @@ class Game:
             self.bridge.log("{} 没有手牌".format(target.name))
             return
 
-        stolen = random.choice(target.hand)
+        stolen = self.random.choice(target.hand)
         target.remove_from_hand([stolen])
         player.add_to_hand([stolen])
         self.bridge.log("{} 从 {} 手里抽了1张牌".format(player.name, target.name))

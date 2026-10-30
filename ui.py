@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from constants import ActionType
+if __package__:
+    from .constants import ActionType
+else:
+    from constants import ActionType
 
 _ACTION_LABELS = {
     ActionType.DRAW_DECK: "从牌库抽牌",

@@ -4,6 +4,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+import random
 from unittest.mock import MagicMock
 from card import Card, Deck, reset_uid_counter
 from constants import CardRank, Suit, reset_config_cache
@@ -29,6 +30,7 @@ def _make_game(n_players=3, hand_size=5):
         p.add_to_hand(deck.draw(hand_size))
 
     game = MagicMock()
+    game.random = random.Random(0)
     game.get_players.return_value = players
     game.get_current_player_idx.return_value = 0
     game.log = MagicMock()

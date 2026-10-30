@@ -44,15 +44,15 @@ def _player_to_dict(player, hide_hand=False):
     return d
 
 
-def serialize_state(game, viewer_idx=None):
+def serialize_state(game, viewer_idx=-1):
     """
     将 Game 对象序列化为 JSON dict。
     viewer_idx: 当前观看者的玩家索引，只显示该玩家的手牌，其他人只显示手牌数量。
-    如果 viewer_idx 为 None，显示所有人手牌（调试模式）。
+    默认和无效索引只返回公开状态。
     """
     players_data = []
     for p in game.players:
-        hide = (viewer_idx is not None and p.idx != viewer_idx)
+        hide = p.idx != viewer_idx
         players_data.append(_player_to_dict(p, hide_hand=hide))
 
     return {

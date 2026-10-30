@@ -3,7 +3,6 @@ TransCard/online/adapter.py
 将 TransCard 的 Game / bridge 包装为 framework 的 AbstractGame。
 """
 from __future__ import annotations
-import sys, os, random
 from typing import Any
 
 try:
@@ -15,16 +14,11 @@ except ImportError as _e:
         "原始错误: {}".format(_e)
     )
 
-# 确保 TransCard 包自身可被 import
-_TC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _TC_DIR not in sys.path:
-    sys.path.insert(0, _TC_DIR)
-
-from constants import ActionType, CombinationType, CardRank
-from card import Card
-from player import Player
-from ai import RandomAI, GreedyAI, DefensiveAI, AIStrategy
-from game import Game
+from ..constants import ActionType, CombinationType, CardRank
+from ..card import Card
+from ..player import Player
+from ..ai import RandomAI, GreedyAI, DefensiveAI, AIStrategy
+from ..game import Game
 from .state import serialize_state, _card_to_dict
 
 
@@ -169,8 +163,8 @@ class TransCardGame(AbstractGame):
         self._game.setup(player_names, human_flags)
 
     def run(self):
-        seed = random.randint(0, 2**31 - 1)
-        random.seed(seed)
+        if self._game is None:
+            raise RuntimeError("请先调用 setup()")
         self._game.run()
 
         # 游戏结束，广播最终结果
